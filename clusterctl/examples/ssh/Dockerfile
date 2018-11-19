@@ -82,7 +82,9 @@ COPY --from=builder /var/tmp/${K8S_VERSION_NEW} rpms/${K8S_VERSION_NEW}
 COPY --from=builder /usr/scripts ./scripts
 
 RUN mkdir -p /resources/yaml \
-  && wget --directory-prefix=/resources/yaml https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml 
+  && wget --directory-prefix=/resources/yaml https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml \
+  && mkdir -p /resources/bin \
+  && wget --directory-prefix=/resources/bin https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz
 
 RUN createrepo /resources/rpms/${K8S_VERSION_OLD}
 

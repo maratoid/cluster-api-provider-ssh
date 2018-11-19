@@ -19,6 +19,8 @@
             mkdir -p /etc/docker
             cat << EOF > /etc/docker/daemon.json
           {
+            "iptables": false,
+            "ip-masq": false,
             "insecure-registries": [
                 "docker",
                 "docker.io",
@@ -225,9 +227,9 @@
             fi
 
             setenforce 0
-            sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config]
+            sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
-            toolsImage=$(docker create quay.io/samsung_cnct/cm-vmware-bootstrap:0.1.21)
+            toolsImage=$(docker create quay.io/samsung_cnct/cm-vmware-bootstrap:0.1.22)
             echo >&2 "Using boostrap image ${toolsImage}"
 
             if ! docker cp ${toolsImage}:/resources/rpms/ /var/log/rpms;then
@@ -279,8 +281,18 @@
               return 1
             fi
 
+            cat << EOF > /etc/systemd/system/kubelet.service.d/20-kubenet.conf
+          [Service]
+          Environment="KUBELET_DNS_ARGS=--cluster-dns=${CLUSTER_DNS_SERVER} --cluster-domain=${CLUSTER_DNS_DOMAIN}
+          EOF
+
             if ! swapoff -a;then
               echo >&2 "Unable to turn off swapping"
+              return 1
+            fi
+
+            if ! sudo modprobe br_netfilter;then
+              echo >&2 "Unable to modprobe br_netfilter"
               return 1
             fi
 
